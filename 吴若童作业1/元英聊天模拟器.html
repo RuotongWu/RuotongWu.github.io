@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>元英聊天模拟器</title>
+
+
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #f5f5f5;
+    }
+
+    .chat-container {
+        width: 35%;
+        margin: 20px auto;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .nameOfZhang {
+        font-family: Arial, sans-serif;
+        background-color:#f5f5f5;
+        color: black;
+        font-size: 15px;
+        padding-top: 3px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #DFE2E4;
+        margin-bottom: 0px;
+    }
+
+    .chat {
+        padding: 20px;
+        overflow-y: scroll;
+        height: 400px;
+    }
+
+    .message {
+        margin-bottom: 10px;
+        overflow: hidden;
+    }
+
+    .avatar {
+        float: left;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+    }
+
+    .text {
+        max-width: 70%;
+        padding: 10px;
+        border-radius: 10px;
+    }
+
+    .receiver {
+        background-color: #ffffff;
+    }
+
+    .sender {
+        background-color: #aaeb7a;
+        text-align: right;
+    }
+
+    .input-container {
+        overflow: hidden;
+        padding: 10px;
+        border-top: 1px solid #ccc;
+        position: relative;
+    }
+
+    .input {
+        width: 70%;
+        padding: 8px;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+        float: left;
+    }
+
+    .send-button {
+        padding: 8px 15px;
+        border-radius: 5px;
+        background-color: #4caf50;
+        color: #fff;
+        border: none;
+        float: right;
+        cursor: pointer;
+    }
+</style>
+</head>
+
+
+<body>
+<div class="chat-container">
+  <h1 align="center" class=nameOfZhang>张元英</h1>
+    <div class="chat" id="chat">
+        <div class="message">
+            <img src="touxiang_xiaoyuan.jpg" class="avatar">
+            <div class="text receiver">又是美好的一天！午餐吃什么好呢…</div>
+        </div>
+    </div>
+    <div class="input-container">
+        <select id="userInput" class="input">
+            <option value="韩国泡菜🇰🇷">韩国泡菜🇰🇷</option>
+            <option value="山东煎饼🇨🇳">山东煎饼🇨🇳</option>
+        </select>
+        <button onclick="sendUserInput()" class="send-button">发送</button>
+    </div>
+</div>
+
+<script>
+    let currentQuestion = 1;
+    const selectElement = document.getElementById('userInput');
+
+    function sendUserInput() {
+        const userInput = selectElement.value;
+        const chat = document.getElementById('chat');
+
+        if (userInput) {
+            const newMessage = `
+                <div class="message">
+                    <div class="text sender">${userInput}</div>
+                    <img src="touxiang_moren.jpg" class="avatar" style="float: right;">
+                </div>
+            `;
+
+            chat.innerHTML += newMessage;
+            chat.scrollTop = chat.scrollHeight;
+
+            handleZhangYuanYingReply(userInput);
+        }
+    }
+
+    function handleZhangYuanYingReply(userInput) {
+        let zhangYuanYingReply = '';
+
+        if (currentQuestion === 1) {
+            if (userInput === '韩国泡菜🇰🇷') {
+                zhangYuanYingReply = "泡菜，很有韩国特色！🇰🇷<img src='张元英高兴.gif' alt='张元英高兴.gif' style='width: 70%;'>";
+            } else if (userInput === '山东煎饼🇨🇳') {
+                zhangYuanYingReply = '？煎饼，很美味的新奇食物！';
+            }
+            setTimeout(askIf, 1000);
+
+        } else if (currentQuestion === 2) {
+            if (userInput === 'yes') {
+                zhangYuanYingReply = 'really？！（笔芯）（手舞足蹈）让小圆来考考你哦';
+            } else {
+                zhangYuanYingReply = '小圆很开心！（笔芯）（手舞足蹈）让小圆来考考你哦';
+            }
+            setTimeout(askName, 1000);
+
+        } else if (currentQuestion === 3) {
+            if (userInput === 'izone') {
+                zhangYuanYingReply = "不愧是你！<img src='张元英转圈.gif' alt='张元英转圈.gif' style='width: 70%;'>";
+            } else {
+                zhangYuanYingReply = "小圆是做女团的啦 <img src='张元英晕倒.gif' alt='张元英晕倒.gif' style='width: 70%;'>";
+            }
+            setTimeout(askWhat, 1000);
+
+        } else if (currentQuestion === 4) {
+            if (userInput === '凌晨上普拉提课') {
+                zhangYuanYingReply = '小圆很喜欢普拉提～';
+            } else {
+                zhangYuanYingReply = "我真的没有偷偷开药房哦<img src='张元英lovedive.gif' alt='张元英lovedive.gif' style='width: 70%;'>";
+            }
+            selectElement.innerHTML = `
+                <option value="给队友偷偷下增肥药">给队友偷偷下增肥药</option>
+                <option value="给队友偷偷下缩小药">给队友偷偷下缩小药</option>
+                <option value="在爱河练习潜水">在爱河练习潜水</option>
+                <option value="凌晨上普拉提课">凌晨上普拉提课</option>
+            `;
+        setTimeout(askIAM, 1000);
+
+       } else if (currentQuestion === 5) {
+           if (userInput === '飞机') {
+               zhangYuanYingReply = "That is who I AM~<img src='张元英跳飞机.gif' alt='张元英跳飞机.gif' style='width: 70%;'>";
+           } else {
+               zhangYuanYingReply = '莫名其妙(♯｀∧´)';
+           }
+           setTimeout(askWunvyi, 1000);
+
+      } else if (currentQuestion === 6) {
+          if (userInput === '张元英') {
+             zhangYuanYingReply = "谢谢你的认可～<img src='张元英转圈.gif' alt='张元英转圈.gif' style='width: 70%;'>";
+         } else {
+             zhangYuanYingReply = '志敏姐姐很棒，小圆也会继续努力的🥹';
+         }
+     }
+
+
+        const chat = document.getElementById('chat');
+        const newZhangYuanYingMessage = `
+            <div class="message">
+                <img src="touxiang_xiaoyuan.jpg" class="avatar">
+                <div class="text receiver">${zhangYuanYingReply}</div>
+            </div>
+        `;
+        chat.innerHTML += newZhangYuanYingMessage;
+        chat.scrollTop = chat.scrollHeight;
+
+        currentQuestion++;
+    }
+
+
+    function askIf() {
+        const chat = document.getElementById('chat');
+        const newMessage = `
+            <div class="message">
+                <img src="touxiang_xiaoyuan.jpg" class="avatar">
+                <div class="text receiver">很高兴认识欧尼！欧尼是我的粉丝吗？</div>
+            </div>
+        `;
+        chat.innerHTML += newMessage;
+        chat.scrollTop = chat.scrollHeight;
+
+        selectElement.innerHTML = `
+            <option value="yes">yes</option>
+            <option value="是">是</option>
+            <option value="当然是">当然是</option>
+        `;
+    }
+
+    function askName() {
+        const chat = document.getElementById('chat');
+        const newMessage = `
+            <div class="message">
+                <img src="touxiang_xiaoyuan.jpg" class="avatar">
+                <div class="text receiver">我是从哪个团出道的呢～</div>
+            </div>
+        `;
+        chat.innerHTML += newMessage;
+        chat.scrollTop = chat.scrollHeight;
+
+        selectElement.innerHTML = `
+            <option value="izone">izone</option>
+            <option value="TFboys">TFboys</option>
+            <option value="时代少年团">时代少年团</option>
+        `;
+    }
+
+    function askWhat() {
+        const chat = document.getElementById('chat');
+        const newMessage = `
+            <div class="message">
+                <img src="touxiang_xiaoyuan.jpg" class="avatar">
+                <div class="text receiver">小圆平常喜欢干什么呢owo</div>
+            </div>
+        `;
+        chat.innerHTML += newMessage;
+        chat.scrollTop = chat.scrollHeight;
+
+        selectElement.innerHTML = `
+            <option value="给队友偷偷下增肥药">给队友偷偷下增肥药</option>
+            <option value="给队友偷偷下缩小药">给队友偷偷下缩小药</option>
+            <option value="在爱河练习潜水">在爱河练习潜水</option>
+            <option value="凌晨上普拉提课">凌晨上普拉提课</option>
+        `;
+    }
+
+    function askIAM() {
+        const chat = document.getElementById('chat');
+        const newMessage = `
+            <div class="message">
+                <img src="touxiang_xiaoyuan.jpg" class="avatar">
+                <div class="text receiver">在阳光明媚的一天，小圆跳了什么交通工具</div>
+            </div>
+        `;
+        chat.innerHTML += newMessage;
+        chat.scrollTop = chat.scrollHeight;
+
+        selectElement.innerHTML = `
+            <option value="轮船">轮船</option>
+            <option value="地铁">地铁</option>
+            <option value="飞机">飞机</option>
+            <option value="卫星">卫星</option>
+        `;
+    }
+
+    function askWunvyi() {
+        const chat = document.getElementById('chat');
+        const newMessage = `
+            <div class="message">
+                <img src="touxiang_xiaoyuan.jpg" class="avatar">
+                <div class="text receiver">欧尼心目中的五颜一是谁呢^_^～</div>
+            </div>
+        `;
+        chat.innerHTML += newMessage;
+        chat.scrollTop = chat.scrollHeight;
+
+        selectElement.innerHTML = `
+            <option value="柳志敏">柳志敏</option>
+            <option value="张元英">张元英</option>
+        `;
+    }
+</script>
+</body>
+</html>
