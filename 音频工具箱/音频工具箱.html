@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>音频工具箱</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+    <style>
+        :root {
+            --morandi-blue: #A8B5C4;
+            --morandi-pink: #D4C4C4;
+            --morandi-green: #B8C9B8;
+            --morandi-cream: #E8E4DF;
+            --morandi-lavender: #C4B8C4;
+            --morandi-sage: #C8C8B8;
+            --bg-cream: #F5F2ED;
+            --text-dark: #4A4A4A;
+            --text-light: #7A7A7A;
+        }
+
+        body {
+            background-color: var(--bg-cream);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: var(--text-dark);
+        }
+
+        .morandi-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+        }
+
+        .tab-active {
+            background: var(--morandi-blue);
+            color: white;
+        }
+
+        .tab-inactive {
+            background: transparent;
+            color: var(--text-light);
+        }
+
+        .btn-primary {
+            background: var(--morandi-blue);
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background: #8FA3B8;
+            transform: translateY(-2px);
+        }
+
+        .btn-primary:disabled {
+            background: #C8C8C8;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: var(--morandi-green);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #A5B6A5;
+        }
+
+        .file-drop {
+            border: 2px dashed var(--morandi-blue);
+            border-radius: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .file-drop.dragover {
+            background: rgba(168, 181, 196, 0.1);
+            border-color: var(--morandi-green);
+        }
+
+        .loading-spinner {
+            border: 3px solid var(--morandi-cream);
+            border-top: 3px solid var(--morandi-blue);
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: var(--morandi-cream);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--morandi-blue);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .feature-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .input-field {
+            border: 2px solid var(--morandi-cream);
+            border-radius: 12px;
+            padding: 12px 16px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: var(--morandi-blue);
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-6">
+    <div class="w-full max-w-lg">
+        <!-- 标题 -->
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-light text-gray-700 tracking-wide">音频工具箱</h1>
+            <p class="text-gray-400 mt-2 text-sm">小宇宙播客下载 & 网易云 ncm 转换</p>
+        </div>
+
+        <!-- Tab 切换 -->
+        <div class="flex gap-2 mb-6">
+            <button onclick="switchTab('podcast')" id="tab-podcast"
+                class="flex-1 py-3 px-4 rounded-xl font-medium transition-all">
+                <i class="fa fa-podcast mr-2"></i>小宇宙下载
+            </button>
+            <button onclick="switchTab('ncm')" id="tab-ncm"
+                class="flex-1 py-3 px-4 rounded-xl font-medium transition-all">
+                <i class="fa fa-music mr-2"></i>ncm转换
+            </button>
+        </div>
+
+        <!-- 小宇宙下载面板 -->
+        <div id="panel-podcast" class="morandi-card p-8 fade-in">
+            <div class="flex items-center gap-4 mb-6">
+                <div class="feature-icon" style="background: rgba(168, 181, 196, 0.2); color: var(--morandi-blue);">
+                    <i class="fa fa-podcast"></i>
+                </div>
+                <div>
+                    <h2 class="text-xl font-medium">小宇宙播客</h2>
+                    <p class="text-sm text-gray-400">输入播客链接，一键下载</p>
+                </div>
+            </div>
+
+            <div class="space-y-4">
+                <input type="text" id="podcast-url" class="input-field w-full"
+                    placeholder="https://www.xiaoyuzhoufm.com/episode/xxx">
+
+                <button onclick="downloadPodcast()" id="podcast-btn" class="btn-primary w-full py-4 rounded-xl font-medium">
+                    <span id="podcast-btn-text"><i class="fa fa-download mr-2"></i>开始下载</span>
+                    <span id="podcast-loading" class="hidden">
+                        <span class="loading-spinner mr-2"></span>正在获取...
+                    </span>
+                </button>
+            </div>
+
+            <div id="podcast-result" class="mt-6 hidden">
+                <div class="p-4 rounded-xl" style="background: rgba(184, 201, 184, 0.2);">
+                    <div class="flex items-center gap-3">
+                        <i class="fa fa-check-circle text-green-500 text-xl"></i>
+                        <div>
+                            <p class="font-medium" id="podcast-title"></p>
+                            <p class="text-sm text-gray-500" id="podcast-size"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ncm 转换面板 -->
+        <div id="panel-ncm" class="morandi-card p-8 hidden fade-in">
+            <div class="flex items-center gap-4 mb-6">
+                <div class="feature-icon" style="background: rgba(184, 201, 184, 0.2); color: var(--morandi-green);">
+                    <i class="fa fa-music"></i>
+                </div>
+                <div>
+                    <h2 class="text-xl font-medium">网易云 ncm 转换</h2>
+                    <p class="text-sm text-gray-400">上传 ncm 文件，转换为 flac 格式</p>
+                </div>
+            </div>
+
+            <!-- 文件上传区域 -->
+            <div id="drop-zone" class="file-drop p-10 text-center cursor-pointer">
+                <i class="fa fa-cloud-upload text-4xl mb-4" style="color: var(--morandi-blue);"></i>
+                <p class="text-gray-500 mb-2">拖拽 ncm 文件到这里</p>
+                <p class="text-gray-400 text-sm">或点击选择文件</p>
+                <input type="file" id="ncm-file" accept=".ncm" class="hidden">
+            </div>
+
+            <!-- 文件信息 -->
+            <div id="ncm-info" class="mt-6 hidden">
+                <div class="p-4 rounded-xl" style="background: rgba(200, 200, 184, 0.2);">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <i class="fa fa-file-audio-o text-xl" style="color: var(--morandi-sage);"></i>
+                            <div>
+                                <p class="font-medium" id="ncm-filename"></p>
+                                <p class="text-sm text-gray-500" id="ncm-filesize"></p>
+                            </div>
+                        </div>
+                        <button onclick="convertNCM()" id="ncm-btn" class="btn-secondary px-6 py-2 rounded-lg">
+                            <i class="fa fa-exchange mr-1"></i>转换
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 转换进度 -->
+            <div id="ncm-progress" class="mt-6 hidden">
+                <div class="flex items-center gap-3 mb-2">
+                    <span class="loading-spinner"></span>
+                    <span class="text-gray-500">正在转换...</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 60%;"></div>
+                </div>
+            </div>
+
+            <!-- 转换结果 -->
+            <div id="ncm-result" class="mt-6 hidden">
+                <div class="p-4 rounded-xl" style="background: rgba(184, 201, 184, 0.2);">
+                    <div class="flex items-center gap-3">
+                        <i class="fa fa-check-circle text-green-500 text-xl"></i>
+                        <div>
+                            <p class="font-medium">转换完成</p>
+                            <p class="text-sm text-gray-500" id="ncm-output"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 底部提示 -->
+        <p class="text-center text-gray-400 text-xs mt-8">
+            文件将保存到下载目录 • 本地处理，保护隐私
+        </p>
+    </div>
+
+    <script>
+        // Tab 切换
+        function switchTab(tab) {
+            const podcastPanel = document.getElementById('panel-podcast');
+            const ncmPanel = document.getElementById('panel-ncm');
+            const podcastTab = document.getElementById('tab-podcast');
+            const ncmTab = document.getElementById('tab-ncm');
+
+            if (tab === 'podcast') {
+                podcastPanel.classList.remove('hidden');
+                ncmPanel.classList.add('hidden');
+                podcastTab.className = 'flex-1 py-3 px-4 rounded-xl font-medium transition-all tab-active';
+                ncmTab.className = 'flex-1 py-3 px-4 rounded-xl font-medium transition-all tab-inactive';
+            } else {
+                podcastPanel.classList.add('hidden');
+                ncmPanel.classList.remove('hidden');
+                podcastTab.className = 'flex-1 py-3 px-4 rounded-xl font-medium transition-all tab-inactive';
+                ncmTab.className = 'flex-1 py-3 px-4 rounded-xl font-medium transition-all tab-active';
+            }
+        }
+
+        // 初始化 Tab 状态
+        document.getElementById('tab-podcast').className = 'flex-1 py-3 px-4 rounded-xl font-medium transition-all tab-active';
+        document.getElementById('tab-ncm').className = 'flex-1 py-3 px-4 rounded-xl font-medium transition-all tab-inactive';
+
+        // 小宇宙下载
+        async function downloadPodcast() {
+            const url = document.getElementById('podcast-url').value.trim();
+            if (!url) {
+                alert('请输入播客链接');
+                return;
+            }
+
+            const btn = document.getElementById('podcast-btn');
+            const btnText = document.getElementById('podcast-btn-text');
+            const btnLoading = document.getElementById('podcast-loading');
+
+            btn.disabled = true;
+            btnText.classList.add('hidden');
+            btnLoading.classList.remove('hidden');
+
+            try {
+                // 通过代理下载
+                const proxyUrl = '/api/xiaoyuzhou?url=' + encodeURIComponent(url);
+                const response = await fetch(proxyUrl);
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || '下载失败');
+                }
+
+                // 获取文件名
+                const contentDisposition = response.headers.get('content-disposition');
+                let filename = 'podcast.m4a';
+                if (contentDisposition) {
+                    const match = contentDisposition.match(/filename="([^"]+)"/);
+                    if (match) {
+                        filename = decodeURIComponent(match[1]);
+                    }
+                }
+
+                // 下载文件
+                const blob = await response.blob();
+                const size = (blob.size / 1024 / 1024).toFixed(2);
+
+                // 创建下载链接
+                const downloadUrl = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = downloadUrl;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(downloadUrl);
+
+                // 显示结果
+                document.getElementById('podcast-title').textContent = filename;
+                document.getElementById('podcast-size').textContent = size + ' MB';
+                document.getElementById('podcast-result').classList.remove('hidden');
+
+            } catch (error) {
+                alert('下载失败: ' + error.message);
+            } finally {
+                btn.disabled = false;
+                btnText.classList.remove('hidden');
+                btnLoading.classList.add('hidden');
+            }
+        }
+
+        // ncm 文件上传
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('ncm-file');
+        let selectedFile = null;
+
+        dropZone.addEventListener('click', () => fileInput.click());
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file && file.name.endsWith('.ncm')) {
+                handleFileSelect(file);
+            } else {
+                alert('请选择 ncm 文件');
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                handleFileSelect(file);
+            }
+        });
+
+        function handleFileSelect(file) {
+            selectedFile = file;
+            document.getElementById('ncm-filename').textContent = file.name;
+            document.getElementById('ncm-filesize').textContent = (file.size / 1024 / 1024).toFixed(2) + ' MB';
+            document.getElementById('ncm-info').classList.remove('hidden');
+            document.getElementById('ncm-result').classList.add('hidden');
+        }
+
+        // ncm 转换
+        async function convertNCM() {
+            if (!selectedFile) {
+                alert('请先选择文件');
+                return;
+            }
+
+            const btn = document.getElementById('ncm-btn');
+            btn.disabled = true;
+
+            document.getElementById('ncm-progress').classList.remove('hidden');
+            document.getElementById('ncm-info').classList.add('hidden');
+
+            try {
+                const formData = new FormData();
+                formData.append('file', selectedFile);
+
+                const response = await fetch('/api/ncm', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || '转换失败');
+                }
+
+                // 获取输出文件名
+                const filename = selectedFile.name.replace('.ncm', '.flac');
+
+                // 下载文件
+                const blob = await response.blob();
+                const downloadUrl = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = downloadUrl;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(downloadUrl);
+
+                // 显示结果
+                document.getElementById('ncm-output').textContent = filename;
+                document.getElementById('ncm-result').classList.remove('hidden');
+
+            } catch (error) {
+                alert('转换失败: ' + error.message);
+            } finally {
+                btn.disabled = false;
+                document.getElementById('ncm-progress').classList.add('hidden');
+                document.getElementById('ncm-info').classList.remove('hidden');
+            }
+        }
+    </script>
+</body>
+</html>

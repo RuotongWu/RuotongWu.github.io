@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>音频工具箱 - 小宇宙下载 & NCM转换</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+    <style>
+        :root {
+            --morandi-green: #8BBE8D;
+            --morandi-red: #BF7F8D;
+            --morandi-yellow: #CCB779;
+            --morandi-blue: #8DA9C4;
+            --morandi-purple: #9B8AA8;
+            --morandi-gray: #B4B4B4;
+            --morandi-bg: #F5F3EF;
+            --morandi-card: #FFFFFF;
+            --morandi-text: #5A5A5A;
+        }
+
+        body {
+            background-color: var(--morandi-bg);
+            color: var(--morandi-text);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            min-height: 100vh;
+        }
+
+        .card {
+            background: var(--morandi-card);
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+        }
+
+        .input-field {
+            background: #FAFAFA;
+            border: 2px solid #E8E6E3;
+            border-radius: 12px;
+            padding: 14px 18px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: var(--morandi-blue);
+            box-shadow: 0 0 0 4px rgba(141, 169, 196, 0.15);
+        }
+
+        .btn {
+            padding: 14px 28px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+        }
+
+        .btn-primary {
+            background: var(--morandi-blue);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #7A98A3;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(141, 169, 196, 0.4);
+        }
+
+        .btn-primary:disabled {
+            background: var(--morandi-gray);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-success {
+            background: var(--morandi-green);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #7AAD7C;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(139, 190, 141, 0.4);
+        }
+
+        .btn-purple {
+            background: var(--morandi-purple);
+            color: white;
+        }
+
+        .btn-purple:hover {
+            background: #8A7997;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(155, 138, 168, 0.4);
+        }
+
+        .tab-btn {
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            background: transparent;
+            color: var(--morandi-gray);
+        }
+
+        .tab-btn.active {
+            background: var(--morandi-card);
+            color: var(--morandi-text);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .tab-btn:hover:not(.active) {
+            color: var(--morandi-text);
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+
+        .status-dot.idle { background: var(--morandi-gray); }
+        .status-dot.loading { background: var(--morandi-yellow); animation: pulse 1.5s infinite; }
+        .status-dot.success { background: var(--morandi-green); }
+        .status-dot.error { background: var(--morandi-red); }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-card {
+            background: linear-gradient(135deg, #FAFAFA 0%, #F5F3EF 100%);
+            border-left: 4px solid var(--morandi-blue);
+        }
+
+        .result-card-ncm {
+            background: linear-gradient(135deg, #FAFAFA 0%, #F5F3EF 100%);
+            border-left: 4px solid var(--morandi-purple);
+        }
+
+        .download-path {
+            background: #FAFAFA;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            color: var(--morandi-gray);
+            word-break: break-all;
+        }
+
+        .file-drop {
+            border: 2px dashed var(--morandi-gray);
+            border-radius: 12px;
+            padding: 40px 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .file-drop:hover, .file-drop.dragover {
+            border-color: var(--morandi-purple);
+            background: rgba(155, 138, 168, 0.05);
+        }
+
+        .file-drop.has-file {
+            border-color: var(--morandi-purple);
+            border-style: solid;
+            background: rgba(155, 138, 168, 0.08);
+        }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body class="flex items-center justify-center p-6">
+    <div class="w-full max-w-xl">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-[#8DA9C4] to-[#9B8AA8] rounded-2xl mb-4">
+                <i class="fa fa-music text-3xl text-white"></i>
+            </div>
+            <h1 class="text-2xl font-semibold text-[#5A5A5A] mb-2">音频工具箱</h1>
+            <p class="text-[#B4B4B4]">小宇宙下载 & NCM转MP3</p>
+        </div>
+
+        <!-- Tabs -->
+        <div class="flex justify-center mb-6 gap-2">
+            <button class="tab-btn active" onclick="switchTab('xiaoyuzhou')">
+                <i class="fa fa-podcast mr-2"></i>小宇宙下载
+            </button>
+            <button class="tab-btn" onclick="switchTab('ncm')">
+                <i class="fa fa-file-audio-o mr-2"></i>NCM转MP3
+            </button>
+        </div>
+
+        <!-- 小宇宙下载 -->
+        <div id="tab-xiaoyuzhou">
+            <div class="card p-8">
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-[#5A5A5A] mb-3">
+                        <i class="fa fa-link mr-2 text-[#8DA9C4]"></i>播客链接
+                    </label>
+                    <input type="text" id="podcastUrl" class="input-field"
+                        placeholder="https://www.xiaoyuzhoufm.com/episode/xxxxx"
+                        onkeypress="if(event.key==='Enter')parsePodcast()">
+                </div>
+
+                <button id="parseBtn" class="btn btn-primary w-full" onclick="parsePodcast()">
+                    <i class="fa fa-search mr-2"></i>解析播客
+                </button>
+
+                <!-- Loading -->
+                <div id="loading" class="hidden mt-6 text-center py-4">
+                    <div class="inline-flex items-center px-4 py-2 bg-[#F5F3EF] rounded-full">
+                        <span class="status-dot loading"></span>
+                        <span id="loadingText" class="text-sm text-[#5A5A5A]">正在解析...</span>
+                    </div>
+                </div>
+
+                <!-- Result -->
+                <div id="result" class="hidden mt-6 fade-in">
+                    <div class="result-card p-5 rounded-xl mb-4">
+                        <div class="flex items-start justify-between mb-3">
+                            <div>
+                                <div class="text-sm text-[#B4B4B4] mb-1">标题</div>
+                                <div id="episodeTitle" class="text-lg font-medium text-[#5A5A5A]"></div>
+                            </div>
+                            <i class="fa fa-music text-[#8DA9C4] text-xl"></i>
+                        </div>
+                        <div class="text-sm text-[#B4B4B4]">
+                            <i class="fa fa-download mr-2"></i>将保存到 ~/Downloads
+                        </div>
+                    </div>
+
+                    <button id="downloadBtn" class="btn btn-success w-full" onclick="downloadAudio()">
+                        <i class="fa fa-download mr-2"></i>下载音频
+                    </button>
+                </div>
+
+                <!-- Success -->
+                <div id="success" class="hidden mt-6 text-center py-4 fade-in">
+                    <div class="inline-flex items-center px-6 py-3 bg-[#8BBE8D] bg-opacity-20 rounded-full">
+                        <i class="fa fa-check-circle text-[#8BBE8D] mr-2"></i>
+                        <span id="successText" class="text-[#5A5A5A]">下载成功！</span>
+                    </div>
+                    <div id="filePath" class="download-path mt-4 text-left"></div>
+                </div>
+
+                <!-- Error -->
+                <div id="error" class="hidden mt-6 fade-in">
+                    <div class="bg-[#BF7F8D] bg-opacity-10 border border-[#BF7F8D] border-opacity-30 p-4 rounded-xl">
+                        <div class="flex items-center text-[#BF7F8D]">
+                            <i class="fa fa-exclamation-circle mr-2"></i>
+                            <span id="errorText">解析失败</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- NCM转换 -->
+        <div id="tab-ncm" class="hidden">
+            <div class="card p-8">
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-[#5A5A5A] mb-3">
+                        <i class="fa fa-cloud-upload mr-2 text-[#9B8AA8]"></i>选择NCM文件
+                    </label>
+                    <div id="fileDrop" class="file-drop" onclick="document.getElementById('ncmFile').click()">
+                        <i class="fa fa-cloud-upload text-4xl text-[#9B8AA8] mb-3"></i>
+                        <p class="text-[#5A5A5A] mb-1">点击选择文件或拖拽到这里</p>
+                        <p class="text-[#B4B4B4] text-sm">支持 .ncm 格式</p>
+                    </div>
+                    <input type="file" id="ncmFile" accept=".ncm" class="hidden" onchange="handleFileSelect(event)">
+                </div>
+
+                <!-- 文件信息 -->
+                <div id="ncmInfo" class="hidden fade-in mb-6">
+                    <div class="result-card-ncm p-5 rounded-xl">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <i class="fa fa-file-audio-o text-2xl text-[#9B8AA8] mr-3"></i>
+                                <div>
+                                    <div id="ncmFileName" class="font-medium text-[#5A5A5A]"></div>
+                                    <div id="ncmFileSize" class="text-sm text-[#B4B4B4]"></div>
+                                </div>
+                            </div>
+                            <button onclick="clearNcmFile()" class="text-[#B4B4B4] hover:text-[#BF7F8D]">
+                                <i class="fa fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <button id="convertBtn" class="btn btn-purple w-full" onclick="convertNcm()" disabled>
+                    <i class="fa fa-exchange mr-2"></i>转换为MP3
+                </button>
+
+                <!-- Loading -->
+                <div id="ncmLoading" class="hidden mt-6 text-center py-4">
+                    <div class="inline-flex items-center px-4 py-2 bg-[#F5F3EF] rounded-full">
+                        <span class="status-dot loading"></span>
+                        <span id="ncmLoadingText" class="text-sm text-[#5A5A5A]">正在转换...</span>
+                    </div>
+                </div>
+
+                <!-- Success -->
+                <div id="ncmSuccess" class="hidden mt-6 text-center py-4 fade-in">
+                    <div class="inline-flex items-center px-6 py-3 bg-[#8BBE8D] bg-opacity-20 rounded-full">
+                        <i class="fa fa-check-circle text-[#8BBE8D] mr-2"></i>
+                        <span id="ncmSuccessText" class="text-[#5A5A5A]">转换成功！</span>
+                    </div>
+                    <div id="ncmFilePath" class="download-path mt-4 text-left"></div>
+                </div>
+
+                <!-- Error -->
+                <div id="ncmError" class="hidden mt-6 fade-in">
+                    <div class="bg-[#BF7F8D] bg-opacity-10 border border-[#BF7F8D] border-opacity-30 p-4 rounded-xl">
+                        <div class="flex items-center text-[#BF7F8D]">
+                            <i class="fa fa-exclamation-circle mr-2"></i>
+                            <span id="ncmErrorText">转换失败</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center mt-8 text-sm text-[#B4B4B4]">
+            <p>所有文件将保存到 ~/Downloads 文件夹</p>
+        </div>
+    </div>
+
+    <script>
+        let currentData = null;
+        let selectedNcmFile = null;
+
+        // 标签切换
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            document.getElementById('tab-xiaoyuzhou').classList.toggle('hidden', tab !== 'xiaoyuzhou');
+            document.getElementById('tab-ncm').classList.toggle('hidden', tab !== 'ncm');
+        }
+
+        // ========== 小宇宙下载功能 ==========
+        function showLoading(text = '正在解析...') {
+            document.getElementById('loading').classList.remove('hidden');
+            document.getElementById('loadingText').textContent = text;
+            document.getElementById('result').classList.add('hidden');
+            document.getElementById('success').classList.add('hidden');
+            document.getElementById('error').classList.add('hidden');
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').classList.add('hidden');
+        }
+
+        function showResult(data) {
+            currentData = data;
+            document.getElementById('episodeTitle').textContent = data.title;
+            document.getElementById('result').classList.remove('hidden');
+            document.getElementById('success').classList.add('hidden');
+            document.getElementById('error').classList.add('hidden');
+        }
+
+        function showSuccessMessage(filepath) {
+            document.getElementById('successText').textContent = '下载成功！';
+            document.getElementById('filePath').innerHTML = `<i class="fa fa-folder-open mr-2"></i>${filepath}`;
+            document.getElementById('success').classList.remove('hidden');
+            document.getElementById('result').classList.add('hidden');
+        }
+
+        function showErrorMessage(message) {
+            document.getElementById('errorText').textContent = message;
+            document.getElementById('error').classList.remove('hidden');
+        }
+
+        async function parsePodcast() {
+            const url = document.getElementById('podcastUrl').value.trim();
+            if (!url) {
+                showErrorMessage('请输入播客链接');
+                return;
+            }
+
+            const btn = document.getElementById('parseBtn');
+            btn.disabled = true;
+            showLoading('正在解析播客信息...');
+
+            try {
+                const response = await fetch(`/api/parse?url=${encodeURIComponent(url)}`);
+                const result = await response.json();
+
+                if (result.success) {
+                    showResult(result.data);
+                } else {
+                    showErrorMessage(result.error || '解析失败');
+                }
+            } catch (e) {
+                showErrorMessage('网络错误，请确保服务器正在运行');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function downloadAudio() {
+            if (!currentData) return;
+
+            const btn = document.getElementById('downloadBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa fa-spinner fa-spin mr-2"></i>下载中...';
+            showLoading('正在下载音频...');
+
+            try {
+                const response = await fetch('/api/download', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(currentData)
+                });
+                const result = await response.json();
+
+                hideLoading();
+                if (result.success) {
+                    showSuccessMessage(result.filepath);
+                } else {
+                    showErrorMessage(result.error || '下载失败');
+                }
+            } catch (e) {
+                hideLoading();
+                showErrorMessage('网络错误');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa fa-download mr-2"></i>下载音频';
+            }
+        }
+
+        // ========== NCM转换功能 ==========
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        }
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            if (!file.name.toLowerCase().endsWith('.ncm')) {
+                showNcmError('请选择NCM格式文件');
+                return;
+            }
+
+            selectedNcmFile = file;
+            document.getElementById('ncmFileName').textContent = file.name;
+            document.getElementById('ncmFileSize').textContent = formatFileSize(file.size);
+            document.getElementById('fileDrop').classList.add('has-file');
+            document.getElementById('ncmInfo').classList.remove('hidden');
+            document.getElementById('convertBtn').disabled = false;
+            document.getElementById('ncmSuccess').classList.add('hidden');
+            document.getElementById('ncmError').classList.add('hidden');
+        }
+
+        // 拖拽功能
+        const fileDrop = document.getElementById('fileDrop');
+        fileDrop.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            fileDrop.classList.add('dragover');
+        });
+        fileDrop.addEventListener('dragleave', () => {
+            fileDrop.classList.remove('dragover');
+        });
+        fileDrop.addEventListener('drop', (e) => {
+            e.preventDefault();
+            fileDrop.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file) {
+                document.getElementById('ncmFile').files = e.dataTransfer.files;
+                handleFileSelect({ target: { files: [file] } });
+            }
+        });
+
+        function clearNcmFile() {
+            selectedNcmFile = null;
+            document.getElementById('ncmFile').value = '';
+            document.getElementById('fileDrop').classList.remove('has-file');
+            document.getElementById('ncmInfo').classList.add('hidden');
+            document.getElementById('convertBtn').disabled = true;
+            document.getElementById('ncmSuccess').classList.add('hidden');
+            document.getElementById('ncmError').classList.add('hidden');
+        }
+
+        function showNcmLoading(text = '正在转换...') {
+            document.getElementById('ncmLoading').classList.remove('hidden');
+            document.getElementById('ncmLoadingText').textContent = text;
+            document.getElementById('ncmSuccess').classList.add('hidden');
+            document.getElementById('ncmError').classList.add('hidden');
+        }
+
+        function hideNcmLoading() {
+            document.getElementById('ncmLoading').classList.add('hidden');
+        }
+
+        function showNcmSuccess(filepath) {
+            document.getElementById('ncmSuccessText').textContent = '转换成功！';
+            document.getElementById('ncmFilePath').innerHTML = `<i class="fa fa-folder-open mr-2"></i>${filepath}`;
+            document.getElementById('ncmSuccess').classList.remove('hidden');
+        }
+
+        function showNcmError(message) {
+            document.getElementById('ncmErrorText').textContent = message;
+            document.getElementById('ncmError').classList.remove('hidden');
+        }
+
+        async function convertNcm() {
+            if (!selectedNcmFile) return;
+
+            const btn = document.getElementById('convertBtn');
+            btn.disabled = true;
+            showNcmLoading('正在读取文件...');
+
+            try {
+                // 读取文件为base64
+                const reader = new FileReader();
+                reader.onload = async function(e) {
+                    const base64 = e.target.result.split(',')[1];
+
+                    try {
+                        showNcmLoading('正在转换，这可能需要一些时间...');
+
+                        const response = await fetch('/api/ncm/convert', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                filename: selectedNcmFile.name,
+                                data: base64
+                            })
+                        });
+                        const result = await response.json();
+
+                        hideNcmLoading();
+                        if (result.success) {
+                            showNcmSuccess(result.filepath);
+                        } else {
+                            showNcmError(result.error || '转换失败');
+                        }
+                    } catch (err) {
+                        hideNcmLoading();
+                        showNcmError('网络错误: ' + err.message);
+                    } finally {
+                        btn.disabled = false;
+                    }
+                };
+                reader.onerror = () => {
+                    hideNcmLoading();
+                    showNcmError('文件读取失败');
+                    btn.disabled = false;
+                };
+                reader.readAsDataURL(selectedNcmFile);
+
+            } catch (e) {
+                hideNcmLoading();
+                showNcmError('转换失败: ' + e.message);
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>
